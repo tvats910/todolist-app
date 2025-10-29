@@ -1,19 +1,21 @@
-// backend/server.ts
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { RowDataPacket } from 'mysql2';
-import pool from './db';
+import pool from './db'; // <-- THE FIX IS ON THIS LINE
 import { authMiddleware } from './authMiddleware';
+import { adminMiddleware } from './adminMiddleware';
 
 dotenv.config();
 
 interface User extends RowDataPacket {
     id: number;
+    name: string;  // Add this
     email: string;
     password: string;
+    role: string;
 }
 
 const app = express();
@@ -25,15 +27,37 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Backend server is running!');
 });
 
+app.get('/api/tasks/all', async (req: Request, res: Response) => {
+  try {
+    const query = `
+      SELECT 
+        tasks.id, 
+        tasks.title, 
+        tasks.description, 
+        tasks.user_id, 
+        users.name, 
+        users.email 
+      FROM tasks 
+      JOIN users ON tasks.user_id = users.id 
+      ORDER BY tasks.id DESC
+    `;
+    const [tasks] = await pool.query(query);
+    res.json(tasks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error fetching all tasks' });
+  }
+});
+
 // === AUTHENTICATION ROUTES ===
 app.post('/api/register', async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
+        const { name, email, password } = req.body;
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'Name, email and password are required' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashedPassword]);
+        await pool.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, hashedPassword]);
         res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
         console.error(error);
@@ -56,7 +80,13 @@ app.post('/api/login', async (req: Request, res: Response) => {
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+        const tokenPayload = { 
+            userId: user.id, 
+            email: user.email,
+            name: user.name,  // Add this
+            role: user.role
+        };
+        const token = jwt.sign(tokenPayload, process.env.JWT_SECRET as string, { expiresIn: '10s' });
         res.json({ message: 'Logged in successfully', token });
     } catch (error) {
         console.error(error);
@@ -64,9 +94,35 @@ app.post('/api/login', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/api/user/me', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+
+    // 1. Fetch user details
+    const [users] = await pool.query<User[]>('SELECT id, name, email, role FROM users WHERE id = ?', [userId]);
+    
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const userDetails = users[0];
+
+    // 2. Fetch all tasks for that user
+    const [tasks] = await pool.query('SELECT * FROM tasks WHERE user_id = ? ORDER BY id DESC', [userId]);
+
+    // 3. Combine and send the response
+    res.json({
+      user: userDetails,
+      tasks: tasks,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error fetching user data' });
+  }
+});
+
 // === PROTECTED TASK ROUTES ===
 
-// GET all tasks for the logged-in user
 app.get('/api/tasks', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -77,7 +133,6 @@ app.get('/api/tasks', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-// POST a new task for the logged-in user
 app.post('/api/tasks', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -93,7 +148,6 @@ app.post('/api/tasks', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-// PATCH a task for the logged-in user
 app.patch('/api/tasks/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
         const userId = req.user?.userId;
@@ -120,7 +174,6 @@ app.patch('/api/tasks/:id', authMiddleware, async (req: Request, res: Response) 
     }
 });
 
-// DELETE a task for the logged-in user
 app.delete('/api/tasks/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -138,7 +191,24 @@ app.delete('/api/tasks/:id', authMiddleware, async (req: Request, res: Response)
   }
 });
 
+app.get('/api/admin/all-tasks', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+    try {
+        const [tasks] = await pool.query(`
+            SELECT tasks.*, users.email 
+            FROM tasks 
+            JOIN users ON tasks.user_id = users.id 
+            ORDER BY tasks.id DESC
+        `);
+        res.json(tasks);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error fetching all tasks' });
+    }
+});
+
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Backend server is running on http://localhost:${PORT}`);
 });
+
