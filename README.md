@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Full-Stack To-Do List Application 📝
 
-## Getting Started
+A modern and responsive task management application built with Next.js, TypeScript, and a Node.js/Express backend. This project allows users to securely register, log in, and manage their daily tasks through a clean and intuitive interface designed with Shadcn/UI.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **User Authentication:** Secure user registration and login using JSON Web Tokens (JWT).
+- **Task Management:** Full CRUD (Create, Read, Update, Delete) functionality for tasks.
+- **Responsive Design:** A clean, component-based UI that works seamlessly on desktop and mobile devices.
+- **Protected Routes:** Backend middleware ensures that users can only access and modify their own tasks.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Tech Stack
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+**Frontend:**
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components:** [Shadcn/UI](https://ui.shadcn.com/)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Backend:**
+- **Runtime:** [Node.js](https://nodejs.org/)
+- **Framework:** [Express.js](https://expressjs.com/)
+- **Database:** [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
+- **Authentication:** [JWT (JSON Web Token)](https://jwt.io/)
 
-## Learn More
+## 📸 Screenshot
 
-To learn more about Next.js, take a look at the following resources:
+*It's a great idea to add a screenshot or a GIF of your application here! It helps people quickly see what you've built.*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+![App Screenshot](link-to-your-screenshot.png)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## ⚙️ Getting Started
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Follow these instructions to get a copy of the project up and running on your local machine.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Prerequisites
+
+You will need [Node.js](https://nodejs.org/en/) installed on your machine. You will also need a MongoDB connection string (you can get a free one from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)).
+
+### Installation & Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git)
+    cd YOUR_REPO_NAME
+    ```
+
+2.  **Install backend dependencies:**
+    ```bash
+    cd backend
+    npm install
+    ```
+
+3.  **Install frontend dependencies:**
+    ```bash
+    # From the root directory
+    npm install
+    ```
+
+4.  **Create the environment file for the backend:**
+    Inside the `backend` folder, create a new file named `.env` and add the following variables.
+    ```env
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=a_very_strong_secret_key_for_jwt
+    PORT=8000
+    ```
+
+### Running the Application
+
+You'll need two terminals open to run both the frontend and backend servers.
+
+1.  **Start the Backend Server:**
+    ```bash
+    # In your first terminal, from the 'backend' directory
+    npm run dev
+    ```
+    The backend server should now be running on http://localhost:8000.
+
+2.  **Start the Frontend Server:**
+    ```bash
+    # In your second terminal, from the root project directory
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
